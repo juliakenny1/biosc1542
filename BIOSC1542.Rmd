@@ -1,0 +1,148 @@
+---
+title: "CS1542"
+author: "Julia Kenny"
+date: "2/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# Make a variable named my_var that contains the result of a math operation 
+my_var <- 3+4 
+ 
+ 
+# Make a vector (ordered list) of the numbers 2, 1, 6, 4, 7 
+my_vector <- c(2,1,6,4,7) 
+ 
+ 
+# Make a vector of the letters A, C, G, T, U, N 
+nucleotides <- c('A', 'C', 'G', 'T', 'U', 'N') 
+ 
+# Doing math on the vector my_vector from above 
+2 * (my_vector + 1) 
+# result: 6 4 14 10 16 
+ 
+ 
+# Doing math on part of the vector my_vector 
+2 * (my_vector[3] + 1) 
+# result: 14 
+ 
+2 * (my_vector[2:4] + 1) 
+# result: 4 14 10 
+
+# Performing a statistical function on my_vector 
+mean(my_vector)   # arithmetic mean 
+median(my_vector) # median 
+sd(my_vector)  # standard deviation 
+var(my_vector)  # variance 
+max(my_vector)  # maximum value in the vector 
+min(my_vector)  # minimum value in the vector 
+sum(my_vector)  # sum of all the numbers in the vector
+
+my_vector + my_vector 
+# result: 4 2 12 8 14 
+ 
+ 
+# Reading a file called three_genes.txt into a data frame, 
+# specifying tab delimiters and a header 
+# Note: this is the same data that is used on the RNA-seq Normalization 
+# exercise, so you can practice calculating normalized expression values. 
+
+```
+
+
+```{r}
+# The file is available for download on CourseWeb in 
+# Course Documents | Example data  
+ 
+my_data <- read.table('zf_counts', sep='\t', header = TRUE) 
+ 
+# Printing the contents of my_data to the screen 
+my_data 
+ 
+# Accessing the first column of my_data 
+my_data[,1] 
+ 
+# Accessing the second row of my_data 
+my_data[2,] 
+ 
+# Accessing the value in the first column of the second row of my_data 
+my_data[2,1] 
+ 
+# Using a column name to access a column in the data frame my_data 
+my_data$gene_length # the column whose header is "gene_length" 
+ 
+# Performing math on a column at once (it's the same as vector math) 
+double_length <- my_data$gene_length * 2 
+sum_count <- sum(my_data$raw_count) 
+norm_count <- my_data$raw_count / my_data$gene_length   #element-wise math 
+ 
+# Storing the result of a math operation in a new column of my_data 
+my_data$rpk <- 1000 * (my_data$raw_count / my_data$gene_length) 
+ 
+ 
+# Getting the number of rows, columns, or both (dimensions) of a data frame 
+nrow(my_data) 
+ncol(my_data) 
+dim(my_data) 
+ 
+ 
+# x-y plot between a vector of x values my_x and y values my_y that we 
+# define using the vector function c() 
+my_x <- c(1,2,2,4,5) 
+my_y <- c(4,5,6,7,7) 
+ 
+plot(my_x, my_y) 
+ 
+ 
+# x-y plot with lines connecting the points, 
+# x and y axis labels, a plot title, 
+# x axis range from 0 to 10, y-axis range from 1 to 5 
+ 
+plot(my_x, my_y, type = 'b', 
+xlab = 'My X axis label', ylab = 'My Y axis label', main = 'My plot title', 
+xlim = c(0,10), ylim = c(0,10) ) 
+
+
+# Histogram plot on the vector my_dist
+hist(my_x) 
+ 
+# Boxplot comparing two vectors, my_x and my_y, with labels and a 
+# plot title 
+ 
+boxplot(list(my_x, my_y), names = c('My X', 'My Y'), 
+ylab = 'My Y axis label', main = 'My plot title') 
+```
+
+```{r}
+genes <- read.table('zf_counts.txt', header=T, colClasses=c('character', 
+'numeric', 'numeric', 'numeric', 'numeric')) 
+
+head(genes)
+genes$X1kcellrpk <- 1000*(genes$X1kcell / genes$Length)
+genes$dome1rpk <- 1000 *(genes$dome1 / genes$Length)
+genes$dome2rpk <- 1000 *(genes$dome2 / genes$Length)
+genes$X1kcellTPM <- (genes$X1kcellrpk / sum(genes$X1kcellrpk))
+genes$dome1TPM <- (genes$dome1rpk/sum(genes$dome1rpk)) *1e6
+genes$dome2TPM <- (genes$dome2rpk/sum(genes$dome2rpk)) *1e6
+genes$X1kcellLog = log2(genes$X1kcellTPM + 0.5)
+genes$dome1Log = log2(genes$dome1TPM +0.5)
+genes$dome2Log = log2(genes$dome2TPM +0.5)
+genes$foldDifference = genes$dome1Log/ genes$X1kcellLog
+
+
+
+two_fold_up <- subset(genes, dome1Log - X1kcellLog > 1)
+genes$log2diff = genes$dome1Log/genes$X1kcellLog
+genes$log2tpmdiff = genes$dome1Log-genes$X1kcellLog
+
+print(genes)
+
+which(grepl('ENSDARG00000090220', genes$Geneid))
+
+```
+
