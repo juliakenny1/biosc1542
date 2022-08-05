@@ -1,0 +1,144 @@
+---
+title: "Assignment6b-1542"
+author: "Julia Kenny"
+date: "2/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+if(!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("DESeq2")
+
+library(DESeq2)
+
+```
+
+
+```{r}
+setwd('~/desktop/1542/')
+
+a = read.table('abundanceU1.tsv', header = T)
+b = read.table('abundanceU1R.tsv', header = T)
+c = read.table('abundanceU2.tsv', header = T)
+d = read.table('abundanceU2R.tsv', header = T)
+e = read.table('abundanceiR.tsv', header = T)
+f = read.table('abundanceI.tsv', header = T)
+
+intermediate = merge(b, d, by = c('target_id'))
+final_table = merge(intermediate, e, by = c('target_id'))
+row.names(final_table) <- b$target_id
+print(final_table)
+
+new_table <- final_table[,c(4,8,12)]
+counts <- round(new_table)
+counts
+new_table
+
+samples <- data.frame('group' = c('uninfected', 'uninfected', 'infected'),
+row.names = c('name1', 'name2', 'name3'))
+samples
+
+library("DESeq2")
+
+dds <- DESeqDataSetFromMatrix(counts, samples, design = ~ group)
+dds <- DESeq(dds)
+
+
+
+```
+
+```{r}
+update.packages("ggplot2")
+install.packages("ggplot2")
+library("ggplot2")
+
+```
+
+
+```{r}
+log2_dds = results(dds, contrast = c('group', 'infected', 'uninfected'))
+log2_dds
+```
+
+
+```{r}
+log2_graph = data.frame(log2_dds)
+log2_graph
+
+```
+
+```{r}
+log2_pval = subset(log2_graph, log2_graph$padj < 0.05)
+log2_pval
+```
+
+```{r}
+ggplot(data=log2_graph, aes(x=log2FoldChange, y=-log10(pvalue))) + geom_point()
+
+```
+
+
+```{r}
+og <-ggplot(data=log2_graph, aes(x=log2FoldChange, y=-log10(pvalue))) + geom_point() + theme_minimal()
+
+log2_graph$diffexpressed <- "NA"
+log2_graph$diffexpressed[log2_graph$log2FoldChange > 0.6 & log2_graph$pvalue < 0.05] <- "UP"
+log2_graph$diffexpressed[log2_graph$log2FoldChange < -0.6 & log2_graph$pvalue < 0.05] <- "DOWN"
+
+p <- ggplot(data=log2_graph, aes(x=log2FoldChange, y=-log10(pvalue), col=diffexpressed)) + geom_point() + theme_minimal() + xlab("Log 2 Infected over Uninfected Expession") + ggtitle("Julia Kenny") + geom_hline(yintercept = -log10(0.05), color = "orange")
+png("1542VolcanoPlot",width = 5*300,
+    height = 5*300,res = 300, pointsize = 8)
+p
+```
+
+```{r}
+install.packages('gplots')
+library(gplots)
+
+```
+
+```{r}
+new_table2 = final_table[,c(5,9,13)]
+counts2 <- round(new_table2)
+samples2 <- data.frame('group' = c('uninfected', 'uninfected', 'infected'), row.names = c('uninfected1', 'uninfected2', 'infected'))
+tpm_diff_exp <- subset(counts2, row.names(counts2) %in% row.names(log2_pval))
+tpm_diff_exp <- counts2[row.names(log2_pval),]
+colnames(tpm_diff_exp) = c("Uninfected1", "Uninfected2", "Infected")
+
+
+tpm_diff_exp$Uninfected1 = log(tpm_diff_exp$Uninfected1 +0.5)
+tpm_diff_exp$Uninfected2 = log(tpm_diff_exp$Uninfected2+ 0.5)
+tpm_diff_exp$Infected = log(tpm_diff_exp$Infected+ 0.5)
+tpm_diff_exp <- tpm_diff_exp[,c(3,1,2)]
+
+```
+
+```{r}
+install.packages("viridis")
+library(viridis)
+```
+
+
+```{r}
+
+
+tpm_diff_exp <- as.matrix(tpm_diff_exp)
+par(oma=c(3,3,3,3))
+par(mar=c(5,4,4,5) + 0.1)
+png("1542HeatMap_A6B",width = 5*300,
+    height = 5*300,res = 300, pointsize = 8)
+heatmap.2(tpm_diff_exp, main = "Julia Kenny", hclustfun = hclust, dendrogram = "both", 
+         trace="none",key = TRUE,key.xlab = "log2 TPM", col=viridis(50),margins = c(10,0),
+         cexCol=0.7,Rowv = TRUE, Colv = TRUE, scale="none",symkey = FALSE,symbreaks= F)
+```
+
+
+
+
+
